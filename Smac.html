@@ -3,76 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smac Ultra</title>
+    <title>Smac Ultra + AI</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { --accent: #007aff; --bg: #000; --text: #fff; --card: #1c1c1e; }
+        :root { --accent: #007aff; --bg: #000; --text: #fff; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        #header { padding: 10px 15px; background: #121212; border-bottom: 0.5px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        #my-id-btn { font-size: 11px; background: #222; padding: 5px 10px; border-radius: 15px; color: var(--accent); cursor: pointer; }
+        #header { padding: 12px 15px; background: #121212; border-bottom: 0.5px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        #my-id-btn { font-size: 11px; background: #222; padding: 6px 12px; border-radius: 20px; color: var(--accent); cursor: pointer; }
 
-        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #000; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         
-        /* Сообщения и Фото */
-        .msg { max-width: 75%; padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.4; position: relative; }
+        .msg { max-width: 80%; padding: 10px 14px; border-radius: 20px; font-size: 16px; line-height: 1.4; animation: msgIn 0.2s ease; }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .msg.my { align-self: flex-end; background: var(--accent); border-bottom-right-radius: 4px; }
         .msg.friend { align-self: flex-start; background: #2c2c2e; border-bottom-left-radius: 4px; }
-        .msg img { max-width: 100%; border-radius: 10px; display: block; margin: 5px 0; }
-        .sticker { width: 120px; height: 120px; object-fit: contain; background: none !important; border: none !important; }
-
-        /* Панель стикеров */
-        #sticker-panel { display: none; background: #1c1c1e; padding: 10px; grid-template-columns: repeat(4, 1fr); gap: 10px; border-top: 0.5px solid #333; max-height: 200px; overflow-y: auto; }
-        .stk-item { font-size: 30px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .stk-item:active { transform: scale(1.2); }
-
-        /* Футер */
-        #footer { padding: 10px; background: #121212; border-top: 0.5px solid #333; }
-        .input-row { display: flex; gap: 8px; align-items: center; max-width: 600px; margin: 0 auto; }
-        .btn-icon { font-size: 20px; color: var(--accent); cursor: pointer; padding: 5px; }
-        .input-field { flex: 1; background: #222; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; }
-        input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 16px; }
-        #send-btn { background: var(--accent); border: none; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-weight: bold; cursor: pointer; }
+        .msg img { max-width: 100%; border-radius: 12px; display: block; margin: 4px 0; }
         
+        #sticker-panel { display: none; background: #1c1c1e; padding: 15px; grid-template-columns: repeat(4, 1fr); gap: 15px; border-top: 0.5px solid #333; max-height: 250px; overflow-y: auto; }
+        .stk-item { font-size: 35px; text-align: center; cursor: pointer; }
+
+        #footer { padding: 12px; background: #121212; border-top: 0.5px solid #333; }
+        .input-row { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: 0 auto; }
+        .icon-btn { font-size: 24px; color: var(--accent); cursor: pointer; }
+        .input-wrap { flex: 1; background: #222; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; }
+        input[type="text"] { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 16px; padding: 8px 0; }
+        .send-btn { background: var(--accent); border: none; width: 36px; height: 36px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .bot-btn { background: #32d74b; color: #000; border-radius: 20px; border: none; padding: 12px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div><b style="font-size: 17px;">Smac Ultra</b><br><span id="status" style="font-size:12px; color:#555;">сеть...</span></div>
+    <div><b style="font-size: 18px;">Smac Ultra AI</b><br><span id="status" style="font-size:12px; color:#555;">инициализация...</span></div>
     <div id="my-id-btn" onclick="copyId()">ID: <span id="my-id">...</span></div>
 </div>
 
-<div id="chat-window"></div>
-
-<div id="sticker-panel">
-    <div class="stk-item" onclick="sendSticker('🦆')">🦆</div>
-    <div class="stk-item" onclick="sendSticker('😎')">😎</div>
-    <div class="stk-item" onclick="sendSticker('🔥')">🔥</div>
-    <div class="stk-item" onclick="sendSticker('💀')">💀</div>
-    <div class="stk-item" onclick="sendSticker('🤖')">🤖</div>
-    <div class="stk-item" onclick="sendSticker('👻')">👻</div>
-    <div class="stk-item" onclick="sendSticker('👑')">👑</div>
-    <div class="stk-item" onclick="sendSticker('🤡')">🤡</div>
+<div id="chat-window">
+    <div id="setup-screen" style="margin: auto; width: 80%; text-align: center;">
+        <input type="text" id="target-id" style="background:#222; border:none; color:#fff; border-radius:15px; padding:15px; width:100%; text-align:center;" placeholder="Введите ID друга">
+        <button onclick="connect()" class="bot-btn" style="background: var(--accent); color: white;">СОЕДИНИТЬ</button>
+        <div style="margin: 15px 0; color: #444;">ИЛИ</div>
+        <button onclick="startBotChat()" class="bot-btn">ЧАТ С БОТОМ 🤖</button>
+    </div>
 </div>
 
-<div id="footer">
-    <div id="setup-ui" class="input-row">
-        <input type="text" id="target-id" style="background:#222; border-radius:15px; padding:10px;" placeholder="ID друга...">
-        <button onclick="connectToFriend()" id="send-btn">→</button>
-    </div>
+<div id="sticker-panel">
+    <div class="stk-item" onclick="sendStk('🦆')">🦆</div>
+    <div class="stk-item" onclick="sendStk('🔥')">🔥</div>
+    <div class="stk-item" onclick="sendStk('💀')">💀</div>
+    <div class="stk-item" onclick="sendStk('🚀')">🚀</div>
+</div>
 
-    <div id="chat-ui" class="input-row hidden">
-        <span class="btn-icon" onclick="toggleStickers()">😊</span>
-        <label class="btn-icon">
-            + <input type="file" id="file-input" accept="image/*" class="hidden" onchange="sendImage(this)">
+<div id="footer" class="hidden">
+    <div id="chat-ui" class="input-row">
+        <div class="icon-btn" onclick="toggleStk()">☺</div>
+        <label class="icon-btn">
+            ⊕ <input type="file" id="img-input" accept="image/*" class="hidden" onchange="sendImg(this)">
         </label>
-        <div class="input-field">
-            <input type="text" id="msg-input" placeholder="Cообщение...">
+        <div class="input-wrap">
+            <input type="text" id="msg-input" placeholder="Сообщение...">
         </div>
-        <button onclick="sendText()" id="send-btn">↑</button>
+        <button onclick="sendTxt()" class="send-btn">↑</button>
     </div>
 </div>
 
@@ -80,72 +76,91 @@
     const myIdDisp = document.getElementById('my-id');
     const statusLabel = document.getElementById('status');
     const chatWin = document.getElementById('chat-window');
-    const stickerPanel = document.getElementById('sticker-panel');
+    const stkPanel = document.getElementById('sticker-panel');
+    const footer = document.getElementById('footer');
     
     let myId = 'smac-' + Math.floor(Math.random() * 89999 + 10000);
     let conn = null;
+    let isBot = false;
 
-    const peer = new Peer(myId, {
-        host: '0.peerjs.com', secure: true, port: 443,
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
-    });
+    const peer = new Peer(myId, { host: '0.peerjs.com', secure: true, port: 443 });
 
     function copyId() { navigator.clipboard.writeText(myIdDisp.innerText); alert("ID скопирован"); }
-
-    peer.on('open', id => { myIdDisp.innerText = id; statusLabel.innerText = "в сети"; statusLabel.style.color = "#32d74b"; });
+    peer.on('open', id => { myIdDisp.innerText = id; statusLabel.innerText = "в сети"; });
     peer.on('connection', c => { conn = c; setupChat(); });
 
-    function connectToFriend() {
-        const tid = document.getElementById('target-id').value;
+    function startBotChat() {
+        isBot = true;
+        document.getElementById('setup-screen').classList.add('hidden');
+        footer.classList.remove('hidden');
+        statusLabel.innerText = "Чат с ботом";
+        addMsg("Привет! Я твой личный бот Smac. Можешь слать мне текст, фото или стикеры!", 'friend');
+    }
+
+    function connect() {
+        const tid = document.getElementById('target-id').value.trim();
         if (tid) { conn = peer.connect(tid); setupChat(); }
     }
 
     function setupChat() {
         conn.on('open', () => {
             statusLabel.innerText = "онлайн";
-            document.getElementById('setup-ui').classList.add('hidden');
-            document.getElementById('chat-ui').classList.remove('hidden');
+            document.getElementById('setup-screen').classList.add('hidden');
+            footer.classList.remove('hidden');
         });
-        conn.on('data', data => {
-            if(data.startsWith('img:')) addMsg(data.replace('img:',''), 'friend', true);
-            else if(data.startsWith('stk:')) addMsg(data.replace('stk:',''), 'friend', false, true);
-            else addMsg(data, 'friend');
+        conn.on('data', d => {
+            if(d.startsWith('i:')) addMsg(d.replace('i:',''), 'friend', true);
+            else if(d.startsWith('s:')) addMsg(d.replace('s:',''), 'friend', false, true);
+            else addMsg(d, 'friend');
         });
     }
 
-    // Отправка текста
-    function sendText() {
-        const val = document.getElementById('msg-input').value;
-        if(val && conn) { conn.send(val); addMsg(val, 'my'); document.getElementById('msg-input').value=''; }
+    function sendTxt() {
+        const m = document.getElementById('msg-input');
+        if(!m.value) return;
+        addMsg(m.value, 'my');
+        if(isBot) botReply(m.value);
+        else if(conn) conn.send(m.value);
+        m.value='';
     }
 
-    // Отправка стикера
-    function toggleStickers() { stickerPanel.style.display = stickerPanel.style.display === 'grid' ? 'none' : 'grid'; }
-    function sendSticker(emoji) {
-        if(conn) { conn.send('stk:' + emoji); addMsg(emoji, 'my', false, true); toggleStickers(); }
+    function botReply(text) {
+        statusLabel.innerText = "бот печатает...";
+        setTimeout(() => {
+            const replies = ["Круто!", "Понял тебя", "Интересно...", "Я всего лишь бот, но я тебя слушаю", "🦆 Кря!"];
+            addMsg(replies[Math.floor(Math.random() * replies.length)], 'friend');
+            statusLabel.innerText = "Чат с ботом";
+        }, 1500);
     }
 
-    // Отправка фото
-    function sendImage(input) {
+    function toggleStk() { stkPanel.style.display = stkPanel.style.display === 'grid' ? 'none' : 'grid'; }
+    function sendStk(s) { 
+        addMsg(s,'my',false,true); 
+        if(isBot) setTimeout(()=>addMsg("Классный стикер!", 'friend'), 1000);
+        else if(conn) conn.send('s:'+s);
+        toggleStk(); 
+    }
+
+    function sendImg(input) {
         const file = input.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = e => {
-            const base64 = e.target.result;
-            conn.send('img:' + base64);
-            addMsg(base64, 'my', true);
+            const b64 = e.target.result;
+            addMsg(b64, 'my', true);
+            if(isBot) setTimeout(()=>addMsg("Ого, крутое фото!", 'friend'), 1500);
+            else if(conn) conn.send('i:' + b64);
         };
         reader.readAsDataURL(file);
     }
 
-    function addMsg(content, type, isImg = false, isStk = false) {
-        const div = document.createElement('div');
-        div.className = `msg ${type}`;
-        if(isImg) div.innerHTML = `<img src="${content}">`;
-        else if(isStk) { div.innerText = content; div.classList.add('sticker'); div.style.fontSize = "80px"; }
-        else div.innerText = content;
-        
-        chatWin.appendChild(div);
+    function addMsg(c, t, isI = false, isS = false) {
+        const d = document.createElement('div');
+        d.className = `msg ${t}`;
+        if(isI) d.innerHTML = `<img src="${c}">`;
+        else if(isS) { d.innerText = c; d.style.fontSize = "60px"; d.style.background = "none"; }
+        else d.innerText = c;
+        chatWin.appendChild(d);
         chatWin.scrollTop = chatWin.scrollHeight;
     }
 </script>
