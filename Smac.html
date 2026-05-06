@@ -3,60 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smac OS v2.0</title>
+    <title>Smac Telegram Edition</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { --main-green: #00ff41; --bg-dark: #050505; --msg-in: #1a1a1a; }
-        body { margin: 0; background: var(--bg-dark); color: var(--main-green); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --tg-bg: #0f1721; --tg-header: #17212b; --tg-my-msg: #2b5278; --tg-friend-msg: #182533; --tg-accent: #5288c1; --tg-text: #f5f5f5; }
+        body { margin: 0; background: var(--tg-bg); color: var(--tg-text); font-family: -apple-system, system-ui, Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* HEADER */
-        #header { background: rgba(0, 30, 0, 0.9); padding: 15px; border-bottom: 1px solid var(--main-green); text-align: center; }
-        #my-id { color: #fff; font-family: monospace; background: rgba(0,255,0,0.15); padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px dashed var(--main-green); display: inline-block; margin-top: 5px; }
-        
-        /* CHAT WINDOW */
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; background: radial-gradient(circle at center, #0a0f0a 0%, #000 100%); }
-        
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.4; position: relative; animation: pop 0.2s ease; word-wrap: break-word; }
-        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .msg.my { align-self: flex-end; background: var(--main-green); color: #000; border-bottom-right-radius: 4px; font-weight: 500; }
-        .msg.friend { align-self: flex-start; background: var(--msg-in); color: #e0e0e0; border: 1px solid #333; border-bottom-left-radius: 4px; }
-        
-        .time { font-size: 10px; opacity: 0.5; display: block; margin-top: 5px; text-align: right; }
-        .my .time { color: #000; opacity: 0.7; }
+        /* Шапка в стиле ТГ */
+        #header { background: var(--tg-header); padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #000; z-index: 10; }
+        .user-info { display: flex; flex-direction: column; }
+        .status { font-size: 13px; color: var(--tg-accent); }
+        #my-id-btn { font-size: 11px; color: #888; cursor: pointer; text-decoration: underline; }
 
-        /* INPUT AREA */
-        #ui-layer { background: #111; padding: 15px; border-top: 1px solid #222; }
-        .input-group { display: flex; gap: 10px; align-items: center; }
-        input { flex: 1; background: #000; border: 1px solid #333; color: var(--main-green); padding: 12px 18px; border-radius: 25px; outline: none; font-size: 16px; }
-        input:focus { border-color: var(--main-green); }
+        /* Окно чата */
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: url('https://www.transparenttextures.com/patterns/pinstriped-suit.png'); }
         
-        button { background: var(--main-green); border: none; color: #000; padding: 12px 20px; font-weight: bold; border-radius: 25px; cursor: pointer; }
+        .msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 15px; position: relative; word-wrap: break-word; line-height: 1.3; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .msg.my { align-self: flex-end; background: var(--tg-my-msg); border-bottom-right-radius: 4px; }
+        .msg.friend { align-self: flex-start; background: var(--tg-friend-msg); border-bottom-left-radius: 4px; }
         
-        #typing-indicator { height: 20px; font-size: 12px; padding-left: 20px; color: #555; font-style: italic; }
+        .info-row { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; font-size: 10px; opacity: 0.6; }
+
+        /* Нижняя панель */
+        #bottom-panel { background: var(--tg-header); padding: 8px 12px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #000; }
+        input { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; outline: none; padding: 10px 0; }
+        button { color: var(--tg-accent); background: none; border: none; font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        
+        #typing { position: absolute; bottom: 70px; left: 15px; font-size: 12px; color: var(--tg-accent); height: 15px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div style="font-size: 10px; opacity: 0.6; letter-spacing: 1px;">ВАШ ID (НАЖМИ ЧТОБЫ КОПИРОВАТЬ)</div>
-    <span id="my-id" onclick="copyMyId()">ГЕНЕРАЦИЯ...</span>
+    <div class="user-info">
+        <span style="font-weight: bold;">Smac Messenger</span>
+        <span id="status-text" class="status">ожидание сети...</span>
+    </div>
+    <div id="my-id-btn" onclick="copyId()">ID: <span id="my-id">...</span></div>
 </div>
 
 <div id="chat-window">
-    <div style="text-align: center; font-size: 11px; color: #333; margin-top: 100px;">БЕЗОПАСНОЕ СОЕДИНЕНИЕ P2P</div>
+    <div style="margin: auto; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; font-size: 12px; color: #aaa;">Выберите собеседника для начала чата</div>
 </div>
 
-<div id="typing-indicator"></div>
+<div id="typing"></div>
 
-<div id="ui-layer">
-    <div id="conn-ui" class="input-group">
-        <input type="text" id="target-id" placeholder="ID друга для связи...">
+<div id="bottom-panel">
+    <div id="setup-ui" style="display: flex; width: 100%; gap: 10px;">
+        <input type="text" id="target-id" placeholder="Введите ID друга...">
         <button onclick="connectToFriend()">СВЯЗЬ</button>
     </div>
 
-    <div id="msg-ui" class="input-group" style="display: none;">
-        <input type="text" id="message-text" placeholder="Сообщение..." oninput="notifyTyping()">
+    <div id="chat-ui" class="hidden" style="display: flex; width: 100%; gap: 10px;">
+        <input type="text" id="message-text" placeholder="Сообщение..." oninput="sendTyping()">
         <button onclick="sendMessage()">ОТПР.</button>
     </div>
 </div>
@@ -64,9 +64,10 @@
 <script>
     const chatWindow = document.getElementById('chat-window');
     const myIdDisplay = document.getElementById('my-id');
-    const connUi = document.getElementById('conn-ui');
-    const msgUi = document.getElementById('msg-ui');
-    const typingIndicator = document.getElementById('typing-indicator');
+    const statusText = document.getElementById('status-text');
+    const setupUi = document.getElementById('setup-ui');
+    const chatUi = document.getElementById('chat-ui');
+    const typingIndicator = document.getElementById('typing');
     
     let myPeerId = 'smac-' + Math.floor(Math.random() * 89999 + 10000);
     let activeConn = null;
@@ -77,12 +78,15 @@
         config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
 
-    function copyMyId() {
+    function copyId() {
         navigator.clipboard.writeText(myIdDisplay.innerText);
         alert("ID скопирован!");
     }
 
-    peer.on('open', id => myIdDisplay.innerText = id);
+    peer.on('open', id => {
+        myIdDisplay.innerText = id;
+        statusText.innerText = "в сети";
+    });
 
     peer.on('connection', conn => {
         activeConn = conn;
@@ -92,6 +96,7 @@
     function connectToFriend() {
         const target = document.getElementById('target-id').value;
         if (target) {
+            statusText.innerText = "соединение...";
             activeConn = peer.connect(target);
             setupChat();
         }
@@ -99,26 +104,27 @@
 
     function setupChat() {
         activeConn.on('open', () => {
-            connUi.style.display = 'none';
-            msgUi.style.display = 'flex';
-            addMessage("Система: Связь установлена!", 'friend');
+            statusText.innerText = "онлайн";
+            setupUi.classList.add('hidden');
+            chatUi.classList.remove('hidden');
+            addMessage("Система: Соединение установлено", 'friend');
         });
 
         activeConn.on('data', data => {
-            if(data === "___TYPING___") {
-                typingIndicator.innerText = "Друг печатает...";
+            if(data === "___T") {
+                typingIndicator.innerText = "печатает...";
                 clearTimeout(typingTimer);
-                typingTimer = setTimeout(() => typingIndicator.innerText = "", 1500);
+                typingTimer = setTimeout(() => typingIndicator.innerText = "", 2000);
             } else {
                 typingIndicator.innerText = "";
                 addMessage(data, 'friend');
-                if(navigator.vibrate) navigator.vibrate(100);
+                if(navigator.vibrate) navigator.vibrate(50);
             }
         });
     }
 
-    function notifyTyping() {
-        if(activeConn && activeConn.open) activeConn.send("___TYPING___");
+    function sendTyping() {
+        if(activeConn && activeConn.open) activeConn.send("___T");
     }
 
     function sendMessage() {
@@ -135,14 +141,13 @@
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const div = document.createElement('div');
         div.className = `msg ${type}`;
-        div.innerHTML = `${text} <span class="time">${time}</span>`;
+        div.innerHTML = `${text} <div class="info-row"><span>${time}</span>${type==='my'?'<span>✓✓</span>':''}</div>`;
         chatWindow.appendChild(div);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    document.getElementById('message-text').addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') sendMessage();
-    });
+    document.getElementById('message-text').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+    document.getElementById('target-id').addEventListener('keypress', (e) => { if(e.key === 'Enter') connectToFriend(); });
 </script>
 </body>
 </html>
