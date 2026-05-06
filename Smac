@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DuckChat | Private</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { margin: 0; background: #050505; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #header { background: #001a00; padding: 15px; border-bottom: 2px solid #0f0; box-shadow: 0 0 15px #0f0; text-align: center; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); }
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 15px; position: relative; word-wrap: break-word; }
+        .msg.my { align-self: flex-end; background: #0f0; color: #000; border-bottom-right-radius: 2px; font-weight: bold; }
+        .msg.friend { align-self: flex-start; background: #1a1a1a; color: #0f0; border: 1px solid #0f0; border-bottom-left-radius: 2px; }
+        #input-area { background: #000; padding: 15px; border-top: 2px solid #0f0; display: flex; gap: 10px; }
+        #conn-ui { background: #001a00; padding: 15px; border-top: 2px solid #0f0; display: flex; flex-direction: column; gap: 10px; }
+        input { flex: 1; background: #000; border: 1px solid #0f0; color: #0f0; padding: 12px; border-radius: 5px; outline: none; font-size: 16px; }
+        button { background: #0f0; border: none; color: #000; padding: 12px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
+        #status { font-size: 11px; color: #ff0; margin-top: 5px; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <strong>DUCK_CHAT_V1</strong><br>
+    <small>ТВОЙ ID:</small> <span id="my-id" style="color: #fff;">ГЕНЕРАЦИЯ...</span>
+    <div id="status">ИНИЦИАЛИЗАЦИЯ СЕТИ...</div>
+</div>
+
+<div id="chat-window">
+    <div class="msg friend">СИСТЕМА: Привет! Передай свой ID другу или введи его ID ниже, чтобы начать шифрованный чат.</div>
+</div>
+
+<div id="conn-ui">
+    <div style="display:flex; gap:10px;">
+        <input type="text" id="target-id" placeholder="ID ДРУГА...">
+        <button onclick="connectToFriend()">СВЯЗЬ</button>
+    </div>
+</div>
+
+<div id="msg-ui" style="display: none; background: #000; padding: 15px; border-top: 2px solid #0f0; gap: 10px;">
+    <input type="text" id="message-text" placeholder="Введите сообщение...">
+    <button onclick="sendMessage()">ОТПРАВИТЬ</button>
+</div>
+
+<script>
+    const chatWindow = document.getElementById('chat-window');
+    const myIdDisplay = document.getElementById('my-id');
+    const status = document.getElementById('status');
+    const connUi = document.getElementById('conn-ui');
+    const msgUi = document.getElementById('msg-ui');
+    
+    let myPeerId = 'duck-' + Math.floor(Math.random() * 8999 + 1000);
+    let activeConn = null;
+
+    // Настройки для пробива 4G
+    const peer = new Peer(myPeerId, {
+        debug: 1,
+        config: {'iceServers': [
+            { 'urls': 'stun:stun.l.google.com:19302' },
+            { 'urls': 'stun:stun1.l.google.com:19302' }
+        ]}
+    });
+
+    peer.on('open', id => {
+        myIdDisplay.innerText = id;
+        status.innerText = "ОЖИДАНИЕ ДРУГА...";
+    });
+
+    peer.on('error', err => {
+        status.innerText = "ОШИБКА СЕТИ (ПЕРЕЗАГРУЗКА...)";
+        setTimeout(() => location.reload(), 3000);
+    });
+
+    // Когда кто-то подключается к нам
+    peer.on('connection', conn => {
+        activeConn = conn;
+        setupChat();
+    });
+
+    function connectToFriend() {
+        const target = document.getElementById('target-id').value;
+        if (target) {
+            status.innerText = "ПОПЫТКА СОЕДИНЕНИЯ...";
+            activeConn = peer.connect(target);
+            setupChat();
+        }
+    }
+
+    function setupChat() {
+        activeConn.on('open', () => {
+            status.innerText = "СОЕДИНЕНИЕ УСТАНОВЛЕНО ✅";
+            connUi.style.display = 'none';
+            msgUi.style.display = 'flex';
+            addMessage("СИСТЕМА", "Друг вошел в чат. Канал защищен.", 'friend');
+        });
+
+        activeConn.on('data', data => {
+            addMessage("ДРУГ", data, 'friend');
+            // Вибрация при получении (на телефонах)
+            if(navigator.vibrate) navigator.vibrate(100);
+        });
+        
+        activeConn.on('close', () => {
+            status.innerText = "СВЯЗЬ ПОТЕРЯНА ❌";
+            setTimeout(() => location.reload(), 2000);
+        });
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('message-text');
+        const text = input.value;
+        if (text && activeConn) {
+            activeConn.send(text);
+            addMessage("Я", text, 'my');
+            input.value = '';
+        }
+    }
+
+    function addMessage(sender, text, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerText = text;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Отправка по Enter
+    document.getElementById('message-text').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') sendMessage();
+    });
+</script>
+</body>
+</html>
