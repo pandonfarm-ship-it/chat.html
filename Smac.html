@@ -3,76 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DuckChat | Private</title>
+    <title>Smac | Secure Duck Chat</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { margin: 0; background: #050505; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #header { background: #001a00; padding: 15px; border-bottom: 2px solid #0f0; box-shadow: 0 0 15px #0f0; text-align: center; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); }
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 15px; position: relative; word-wrap: break-word; }
+        body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #header { background: #001a00; padding: 15px; border-bottom: 2px solid #0f0; text-align: center; box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, #000 0%, #001100 100%); }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; position: relative; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .msg.my { align-self: flex-end; background: #0f0; color: #000; border-bottom-right-radius: 2px; font-weight: bold; }
-        .msg.friend { align-self: flex-start; background: #1a1a1a; color: #0f0; border: 1px solid #0f0; border-bottom-left-radius: 2px; }
-        #input-area { background: #000; padding: 15px; border-top: 2px solid #0f0; display: flex; gap: 10px; }
-        #conn-ui { background: #001a00; padding: 15px; border-top: 2px solid #0f0; display: flex; flex-direction: column; gap: 10px; }
-        input { flex: 1; background: #000; border: 1px solid #0f0; color: #0f0; padding: 12px; border-radius: 5px; outline: none; font-size: 16px; }
-        button { background: #0f0; border: none; color: #000; padding: 12px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
-        #status { font-size: 11px; color: #ff0; margin-top: 5px; letter-spacing: 1px; }
+        .msg.friend { align-self: flex-start; background: #111; color: #0f0; border: 1px solid #0f0; border-bottom-left-radius: 2px; }
+        #ui-layer { background: #000; padding: 15px; border-top: 1px solid #030; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 5px; }
+        input { flex: 1; background: #000; border: 1px solid #0f0; color: #0f0; padding: 12px; border-radius: 5px; outline: none; font-size: 16px; font-family: monospace; }
+        button { background: #0f0; border: none; color: #000; padding: 12px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.95); opacity: 0.8; }
+        #status-bar { font-size: 10px; color: #5f5; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .system-msg { text-align: center; color: #555; font-size: 11px; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <strong>DUCK_CHAT_V1</strong><br>
-    <small>ТВОЙ ID:</small> <span id="my-id" style="color: #fff;">ГЕНЕРАЦИЯ...</span>
-    <div id="status">ИНИЦИАЛИЗАЦИЯ СЕТИ...</div>
+    <div style="font-size: 20px; font-weight: bold; letter-spacing: 3px;">SMAC_SYSTEM</div>
+    <div id="id-area">ID: <span id="my-id" style="color: #fff; text-decoration: underline;">ОЖИДАНИЕ...</span></div>
 </div>
 
 <div id="chat-window">
-    <div class="msg friend">СИСТЕМА: Привет! Передай свой ID другу или введи его ID ниже, чтобы начать шифрованный чат.</div>
+    <div class="system-msg">--- КАНАЛ ЗАЩИЩЕН ШИФРОВАНИЕМ P2P ---</div>
 </div>
 
-<div id="conn-ui">
-    <div style="display:flex; gap:10px;">
-        <input type="text" id="target-id" placeholder="ID ДРУГА...">
+<div id="ui-layer">
+    <div id="conn-ui" class="input-group">
+        <input type="text" id="target-id" placeholder="ВВЕДИТЕ ID ДРУГА">
         <button onclick="connectToFriend()">СВЯЗЬ</button>
     </div>
-</div>
 
-<div id="msg-ui" style="display: none; background: #000; padding: 15px; border-top: 2px solid #0f0; gap: 10px;">
-    <input type="text" id="message-text" placeholder="Введите сообщение...">
-    <button onclick="sendMessage()">ОТПРАВИТЬ</button>
+    <div id="msg-ui" class="input-group" style="display: none;">
+        <input type="text" id="message-text" placeholder="СООБЩЕНИЕ...">
+        <button onclick="sendMessage()">SEND</button>
+    </div>
+    
+    <div id="status-bar">LOG: Инициализация протоколов...</div>
 </div>
 
 <script>
     const chatWindow = document.getElementById('chat-window');
     const myIdDisplay = document.getElementById('my-id');
-    const status = document.getElementById('status');
+    const statusBar = document.getElementById('status-bar');
     const connUi = document.getElementById('conn-ui');
     const msgUi = document.getElementById('msg-ui');
     
-    let myPeerId = 'duck-' + Math.floor(Math.random() * 8999 + 1000);
+    let myPeerId = 'smac-' + Math.floor(Math.random() * 89999 + 10000);
     let activeConn = null;
 
-    // Настройки для пробива 4G
+    // Сверхмощные настройки для обхода блокировок 4G
     const peer = new Peer(myPeerId, {
-        debug: 1,
-        config: {'iceServers': [
-            { 'urls': 'stun:stun.l.google.com:19302' },
-            { 'urls': 'stun:stun1.l.google.com:19302' }
-        ]}
+        host: '0.peerjs.com',
+        secure: true,
+        port: 443,
+        config: {
+            'iceServers': [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        }
     });
+
+    // Звук уведомления
+    const beep = () => {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 600; gain.gain.value = 0.1;
+        osc.start(); setTimeout(() => osc.stop(), 150);
+    };
 
     peer.on('open', id => {
         myIdDisplay.innerText = id;
-        status.innerText = "ОЖИДАНИЕ ДРУГА...";
+        statusBar.innerText = "LOG: СИСТЕМА ГОТОВА. ЖДУ ПОДКЛЮЧЕНИЯ.";
     });
 
     peer.on('error', err => {
-        status.innerText = "ОШИБКА СЕТИ (ПЕРЕЗАГРУЗКА...)";
-        setTimeout(() => location.reload(), 3000);
+        statusBar.innerText = "LOG: ОШИБКА " + err.type.toUpperCase();
+        if(err.type === 'network') statusBar.innerText = "LOG: СЕТЬ 4G БЛОКИРУЕТ СВЯЗЬ. ВКЛЮЧИТЕ VPN!";
     });
 
-    // Когда кто-то подключается к нам
     peer.on('connection', conn => {
         activeConn = conn;
         setupChat();
@@ -81,7 +99,7 @@
     function connectToFriend() {
         const target = document.getElementById('target-id').value;
         if (target) {
-            status.innerText = "ПОПЫТКА СОЕДИНЕНИЯ...";
+            statusBar.innerText = "LOG: ПОИСК УЗЛА " + target + "...";
             activeConn = peer.connect(target);
             setupChat();
         }
@@ -89,20 +107,21 @@
 
     function setupChat() {
         activeConn.on('open', () => {
-            status.innerText = "СОЕДИНЕНИЕ УСТАНОВЛЕНО ✅";
+            statusBar.innerText = "LOG: КАНАЛ УСТАНОВЛЕН ✅";
             connUi.style.display = 'none';
             msgUi.style.display = 'flex';
-            addMessage("СИСТЕМА", "Друг вошел в чат. Канал защищен.", 'friend');
+            addMessage("СИСТЕМА", "Связь с удаленным узлом установлена.", 'friend');
+            beep();
         });
 
         activeConn.on('data', data => {
             addMessage("ДРУГ", data, 'friend');
-            // Вибрация при получении (на телефонах)
+            beep();
             if(navigator.vibrate) navigator.vibrate(100);
         });
         
         activeConn.on('close', () => {
-            status.innerText = "СВЯЗЬ ПОТЕРЯНА ❌";
+            statusBar.innerText = "LOG: СВЯЗЬ ОБОРВАНА ❌";
             setTimeout(() => location.reload(), 2000);
         });
     }
