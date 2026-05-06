@@ -7,59 +7,55 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --bg: #0e1621; --header: #17212b; --my-msg: #2b5278; --friend-msg: #182533; --accent: #5288c1; --text: #f5f5f5; }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; }
         
-        /* Шапка */
-        #header { background: var(--header); padding: 10px 15px; border-bottom: 1px solid #000; flex-shrink: 0; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .status { font-size: 13px; color: var(--accent); }
-        #my-id-box { font-size: 11px; color: #888; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+        #header { background: var(--header); padding: 10px 15px; border-bottom: 1px solid #000; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
+        .status { font-size: 13px; color: var(--accent); font-weight: 500; }
+        #my-id-label { font-size: 11px; color: #888; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; cursor: pointer; }
 
-        /* Окно сообщений */
         #chat-window { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background-image: url('https://www.transparenttextures.com/patterns/pinstriped-suit.png'); }
         
-        .msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 15px; position: relative; line-height: 1.3; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 15px; line-height: 1.3; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.3); animation: fadeIn 0.15s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
         .msg.my { align-self: flex-end; background: var(--my-msg); border-bottom-right-radius: 4px; }
         .msg.friend { align-self: flex-start; background: var(--friend-msg); border-bottom-left-radius: 4px; }
         
-        .meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; opacity: 0.6; margin-top: 2px; }
+        .meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10px; opacity: 0.5; margin-top: 2px; }
 
-        /* Панель ввода (Всегда внизу) */
-        #bottom-bar { background: var(--header); padding: 10px; flex-shrink: 0; border-top: 1px solid #000; }
-        .input-row { display: flex; gap: 10px; align-items: center; max-width: 800px; margin: 0 auto; }
+        #bottom-bar { background: var(--header); padding: 10px 15px; border-top: 1px solid #000; }
+        .input-row { display: flex; gap: 12px; align-items: center; }
+        input { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; outline: none; }
+        button { color: var(--accent); background: none; border: none; font-weight: bold; font-size: 15px; cursor: pointer; text-transform: uppercase; }
         
-        input { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; outline: none; padding: 5px; }
-        button { color: var(--accent); background: none; border: none; font-weight: bold; font-size: 15px; cursor: pointer; text-transform: uppercase; padding: 5px 10px; }
-        
-        #typing { font-size: 12px; color: var(--accent); height: 16px; margin-bottom: 4px; padding-left: 10px; }
+        #typing { font-size: 12px; color: var(--accent); height: 16px; margin-bottom: 4px; padding-left: 15px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div class="header-top">
-        <div>
-            <div style="font-weight: bold;">Smac Online</div>
-            <div id="status-label" class="status">ожидание...</div>
-        </div>
-        <div id="my-id-box" onclick="copyId()">ID: <span id="my-id">...</span></div>
+    <div>
+        <div style="font-weight: bold; font-size: 16px;">Smac Online</div>
+        <div id="status-label" class="status">подключение...</div>
     </div>
+    <div id="my-id-label" onclick="copyId()">ID: <span id="my-id">...</span></div>
 </div>
 
 <div id="chat-window">
-    <div style="margin: auto; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 15px; font-size: 12px; color: #888;">Введите ID друга снизу, чтобы начать</div>
+    <div id="welcome-msg" style="margin: auto; background: rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 20px; font-size: 13px; color: #888; text-align: center;">
+        Введите ID друга для начала безопасного чата
+    </div>
 </div>
 
 <div id="typing"></div>
 
 <div id="bottom-bar">
     <div id="setup-ui" class="input-row">
-        <input type="text" id="target-id" placeholder="ID друга...">
+        <input type="text" id="target-id" placeholder="ID собеседника...">
         <button onclick="connectToFriend()">СВЯЗЬ</button>
     </div>
-
     <div id="chat-ui" class="input-row hidden">
         <input type="text" id="message-text" placeholder="Сообщение..." oninput="sendT()">
         <button onclick="sendMessage()">ОТПР.</button>
@@ -78,14 +74,21 @@
     let conn = null;
     let tTimer;
 
+    // Усиленные настройки для пробития 4G блокировок
     const peer = new Peer(myId, {
         host: '0.peerjs.com', secure: true, port: 443,
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
+        config: { 
+            'iceServers': [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ] 
+        }
     });
 
     function copyId() {
         navigator.clipboard.writeText(myIdDisplay.innerText);
-        alert("ID скопирован");
+        alert("ID скопирован!");
     }
 
     peer.on('open', id => {
@@ -93,26 +96,37 @@
         statusLabel.innerText = "в сети";
     });
 
+    // Если кто-то подключается к нам
     peer.on('connection', c => {
         conn = c;
         setupChat();
     });
 
     function connectToFriend() {
-        const tid = document.getElementById('target-id').value;
+        const tid = document.getElementById('target-id').value.trim();
         if (tid) {
             statusLabel.innerText = "соединение...";
-            conn = peer.connect(tid);
+            // Сброс старого зависшего соединения перед новым
+            if(conn) conn.close(); 
+            conn = peer.connect(tid, { reliable: true });
             setupChat();
+            
+            // Таймер сброса: если за 10 сек не подключилось - вернуть статус
+            setTimeout(() => {
+                if(statusLabel.innerText === "соединение...") {
+                    statusLabel.innerText = "ошибка (попробуйте еще раз)";
+                    if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                }
+            }, 10000);
         }
     }
 
     function setupChat() {
         conn.on('open', () => {
             statusLabel.innerText = "онлайн";
+            document.getElementById('welcome-msg').classList.add('hidden');
             setupUi.classList.add('hidden');
             chatUi.classList.remove('hidden');
-            addMsg("Система: Соединение установлено", 'friend');
         });
 
         conn.on('data', data => {
@@ -123,8 +137,13 @@
             } else {
                 typingLabel.innerText = "";
                 addMsg(data, 'friend');
-                if(navigator.vibrate) navigator.vibrate(50);
+                if(navigator.vibrate) navigator.vibrate(60);
             }
+        });
+
+        conn.on('close', () => {
+            statusLabel.innerText = "связь оборвана";
+            location.reload(); // Перезагрузка для стабильности
         });
     }
 
@@ -132,7 +151,7 @@
 
     function sendMessage() {
         const input = document.getElementById('message-text');
-        if (input.value && conn) {
+        if (input.value.trim() && conn && conn.open) {
             conn.send(input.value);
             addMsg(input.value, 'my');
             input.value = '';
