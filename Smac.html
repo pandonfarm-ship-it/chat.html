@@ -3,48 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smac | Secure Duck Chat</title>
+    <title>Smac OS | Messenger</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #header { background: #001a00; padding: 15px; border-bottom: 2px solid #0f0; text-align: center; box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); }
-        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, #000 0%, #001100 100%); }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; position: relative; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .msg.my { align-self: flex-end; background: #0f0; color: #000; border-bottom-right-radius: 2px; font-weight: bold; }
-        .msg.friend { align-self: flex-start; background: #111; color: #0f0; border: 1px solid #0f0; border-bottom-left-radius: 2px; }
-        #ui-layer { background: #000; padding: 15px; border-top: 1px solid #030; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 5px; }
-        input { flex: 1; background: #000; border: 1px solid #0f0; color: #0f0; padding: 12px; border-radius: 5px; outline: none; font-size: 16px; font-family: monospace; }
-        button { background: #0f0; border: none; color: #000; padding: 12px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.95); opacity: 0.8; }
-        #status-bar { font-size: 10px; color: #5f5; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .system-msg { text-align: center; color: #555; font-size: 11px; margin: 5px 0; }
+        :root { --main-color: #00ff41; --bg-dark: #0a0a0a; --msg-friend: #1a1a1a; }
+        body { margin: 0; background: var(--bg-dark); color: var(--main-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Шапка */
+        #header { background: rgba(0, 20, 0, 0.95); padding: 15px; border-bottom: 1px solid var(--main-color); text-align: center; box-shadow: 0 5px 15px rgba(0,255,0,0.1); }
+        #my-id { color: #fff; font-weight: bold; background: rgba(0,255,0,0.1); padding: 4px 8px; border-radius: 4px; cursor: pointer; border: 1px dashed var(--main-color); }
+        
+        /* Окно чата */
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; background: radial-gradient(circle at center, #0d1117 0%, #000 100%); }
+        
+        /* Сообщения */
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 18px; font-size: 15px; position: relative; animation: slideIn 0.2s ease-out; line-height: 1.4; }
+        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .msg.my { align-self: flex-end; background: var(--main-color); color: #000; border-bottom-right-radius: 2px; box-shadow: 0 4px 10px rgba(0,255,0,0.2); }
+        .msg.friend { align-self: flex-start; background: var(--msg-friend); color: #eee; border: 1px solid #333; border-bottom-left-radius: 2px; }
+        
+        .time { font-size: 9px; opacity: 0.6; margin-top: 4px; display: block; text-align: right; }
+        
+        /* Индикатор печатания */
+        #typing { font-size: 12px; color: #555; font-style: italic; margin-left: 20px; height: 20px; }
+
+        /* Панель ввода */
+        #ui-layer { background: #111; padding: 15px; border-top: 1px solid #222; }
+        .input-group { display: flex; gap: 10px; max-width: 600px; margin: 0 auto; }
+        input { flex: 1; background: #000; border: 1px solid #333; color: var(--main-color); padding: 12px 15px; border-radius: 25px; outline: none; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: var(--main-color); box-shadow: 0 0 5px var(--main-color); }
+        
+        button { background: var(--main-color); border: none; color: #000; padding: 12px 25px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: 0.3s; }
+        button:hover { opacity: 0.8; transform: scale(1.05); }
+
+        #status-bar { font-size: 10px; text-align: center; margin-top: 10px; color: #444; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div style="font-size: 20px; font-weight: bold; letter-spacing: 3px;">SMAC_SYSTEM</div>
-    <div id="id-area">ID: <span id="my-id" style="color: #fff; text-decoration: underline;">ОЖИДАНИЕ...</span></div>
+    <div style="font-size: 12px; margin-bottom: 5px; opacity: 0.7;">ВАШ ПЕРСОНАЛЬНЫЙ ID (НАЖМИ ЧТОБЫ КОПИРОВАТЬ)</div>
+    <span id="my-id" onclick="copyId()">ГЕНЕРАЦИЯ...</span>
+    <div id="status-bar">Ожидание инициализации...</div>
 </div>
 
 <div id="chat-window">
-    <div class="system-msg">--- КАНАЛ ЗАЩИЩЕН ШИФРОВАНИЕМ P2P ---</div>
+    <div style="text-align:center; color:#333; font-size:12px;">Здесь будет история ваших сообщений</div>
 </div>
+
+<div id="typing"></div>
 
 <div id="ui-layer">
     <div id="conn-ui" class="input-group">
-        <input type="text" id="target-id" placeholder="ВВЕДИТЕ ID ДРУГА">
+        <input type="text" id="target-id" placeholder="Введите ID друга...">
         <button onclick="connectToFriend()">СВЯЗЬ</button>
     </div>
 
     <div id="msg-ui" class="input-group" style="display: none;">
-        <input type="text" id="message-text" placeholder="СООБЩЕНИЕ...">
-        <button onclick="sendMessage()">SEND</button>
+        <input type="text" id="message-text" placeholder="Сообщение..." oninput="sendTyping()">
+        <button onclick="sendMessage()">▶</button>
     </div>
-    
-    <div id="status-bar">LOG: Инициализация протоколов...</div>
 </div>
 
 <script>
@@ -53,42 +72,26 @@
     const statusBar = document.getElementById('status-bar');
     const connUi = document.getElementById('conn-ui');
     const msgUi = document.getElementById('msg-ui');
+    const typingDisplay = document.getElementById('typing');
     
     let myPeerId = 'smac-' + Math.floor(Math.random() * 89999 + 10000);
     let activeConn = null;
+    let typingTimeout;
 
-    // Сверхмощные настройки для обхода блокировок 4G
     const peer = new Peer(myPeerId, {
-        host: '0.peerjs.com',
-        secure: true,
-        port: 443,
-        config: {
-            'iceServers': [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
-        }
+        host: '0.peerjs.com', secure: true, port: 443,
+        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
 
-    // Звук уведомления
-    const beep = () => {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = 600; gain.gain.value = 0.1;
-        osc.start(); setTimeout(() => osc.stop(), 150);
-    };
+    // Копирование ID
+    function copyId() {
+        navigator.clipboard.writeText(myIdDisplay.innerText);
+        alert("ID скопирован!");
+    }
 
     peer.on('open', id => {
         myIdDisplay.innerText = id;
-        statusBar.innerText = "LOG: СИСТЕМА ГОТОВА. ЖДУ ПОДКЛЮЧЕНИЯ.";
-    });
-
-    peer.on('error', err => {
-        statusBar.innerText = "LOG: ОШИБКА " + err.type.toUpperCase();
-        if(err.type === 'network') statusBar.innerText = "LOG: СЕТЬ 4G БЛОКИРУЕТ СВЯЗЬ. ВКЛЮЧИТЕ VPN!";
+        statusBar.innerText = "Система готова к работе";
     });
 
     peer.on('connection', conn => {
@@ -99,7 +102,7 @@
     function connectToFriend() {
         const target = document.getElementById('target-id').value;
         if (target) {
-            statusBar.innerText = "LOG: ПОИСК УЗЛА " + target + "...";
+            statusBar.innerText = "Поиск узла...";
             activeConn = peer.connect(target);
             setupChat();
         }
@@ -107,23 +110,28 @@
 
     function setupChat() {
         activeConn.on('open', () => {
-            statusBar.innerText = "LOG: КАНАЛ УСТАНОВЛЕН ✅";
+            statusBar.innerText = "Канал связи установлен ✅";
             connUi.style.display = 'none';
             msgUi.style.display = 'flex';
-            addMessage("СИСТЕМА", "Связь с удаленным узлом установлена.", 'friend');
-            beep();
         });
 
         activeConn.on('data', data => {
-            addMessage("ДРУГ", data, 'friend');
-            beep();
-            if(navigator.vibrate) navigator.vibrate(100);
+            if(data === "typing...") {
+                typingDisplay.innerText = "Друг печатает...";
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => typingDisplay.innerText = "", 2000);
+            } else {
+                typingDisplay.innerText = "";
+                addMessage(data, 'friend');
+                if(navigator.vibrate) navigator.vibrate(100);
+            }
         });
-        
-        activeConn.on('close', () => {
-            statusBar.innerText = "LOG: СВЯЗЬ ОБОРВАНА ❌";
-            setTimeout(() => location.reload(), 2000);
-        });
+    }
+
+    function sendTyping() {
+        if(activeConn && activeConn.open) {
+            activeConn.send("typing...");
+        }
     }
 
     function sendMessage() {
@@ -131,20 +139,22 @@
         const text = input.value;
         if (text && activeConn) {
             activeConn.send(text);
-            addMessage("Я", text, 'my');
+            addMessage(text, 'my');
             input.value = '';
         }
     }
 
-    function addMessage(sender, text, type) {
+    function addMessage(text, type) {
+        const now = new Date();
+        const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+        
         const div = document.createElement('div');
         div.className = `msg ${type}`;
-        div.innerText = text;
+        div.innerHTML = `${text} <span class="time">${timeStr}</span>`;
         chatWindow.appendChild(div);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // Отправка по Enter
     document.getElementById('message-text').addEventListener('keypress', (e) => {
         if(e.key === 'Enter') sendMessage();
     });
